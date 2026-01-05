@@ -10,7 +10,7 @@
 
 
 
-## 💡 Why Ollama Scribe?
+## 💡 Why Ollama Scribe Local?
 
 Existing AI PR tools often send your sensitive code to 3rd-party servers or require expensive monthly subscriptions. **Ollama Scribe** bridges the gap between DevOps and Local AI:
 
