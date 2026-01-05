@@ -1,0 +1,104 @@
+name: 'Ollama Scribe - PR Summary'
+description: 'Summarize GitHub Pull Requests using a local Ollama instance. Requires gh, jq, and curl.'
+author: 'Chris Saunders'
+branding:
+    icon: 'message-square'
+    color: 'blue'
+
+inputs:
+    github-token:
+        description: 'The GITHUB_TOKEN to post comments'
+        required: true
+    ollama-url:
+        description: 'The URL of your Ollama server (e.g., https://your-caddy-url.uk/secret)'
+        required: true
+    model-name:
+        description: 'Ollama model to use'
+        required: false
+        default: 'qwen2.5-coder:14b'
+    max-diff-length:
+        description: 'The maximum number of characters for the diff to be sent for summarization.'
+        required: false
+        default: '1500000'
+    prompt-template:
+        description: 'A template for the prompt sent to the model. Use {diff} as a placeholder for the PR diff.'
+        required: false
+        default: 'Summarize the following code changes for a PR description. Use bullet points:\n\n{diff}'
+
+outputs:
+    summary:
+        description: "The generated summary text."
+        value: ${{ steps.summarize.outputs.summary }}
+
+runs:
+    using: 'composite'
+    steps:
+        - id: summarize
+          name: Fetch PR Diff and Summarize
+          shell: bash
+          env:
+              GH_TOKEN: ${{ inputs.github-token }}
+          run: |
+              set -eo pipefail
+
+              # 1. Get the diff of the Pull Request
+              DIFF=$(gh pr diff ${{ github.event.pull_request.number }})
+              if [ -z "$DIFF" ]; then
+                echo "No diff found. Exiting."
+                exit 0
+              fi
+
+              # 2. Truncate diff if it exceeds the max length (line-based to avoid splitting UTF-8)
+              if [ ${#DIFF} -gt ${{ inputs.max-diff-length }} ]; then
+                echo "Diff is too long. Truncating to approximately ${{ inputs.max-diff-length }} characters."
+                DIFF=$(echo "$DIFF" | head -c ${{ inputs.max-diff-length }})
+              fi
+
+              # Check if diff is still non-empty after truncation
+              if [ -z "$DIFF" ]; then
+                echo "::warning::Diff became empty after truncation. Exiting."
+                exit 0
+              fi
+
+              # 3. Create a JSON payload safely using jq, injecting the diff into the prompt template
+              JSON_PAYLOAD=$(jq -n \
+                                --arg model "${{ inputs.model-name }}" \
+                                --arg prompt_template "${{ inputs.prompt-template }}" \
+                                --arg diff "$DIFF" \
+                                '{model: $model, prompt: ($prompt_template | sub("{diff}"; $diff)), stream: false}')
+
+              # 4. Call your local Ollama API with timeout and error handling
+              RESPONSE=$(curl -s -f --max-time 120 \
+                              -H "Content-Type: application/json" \
+                              -X POST "${{ inputs.ollama-url }}/api/generate" \
+                              -d "$JSON_PAYLOAD") || {
+                echo "::error::Failed to connect to Ollama API at ${{ inputs.ollama-url }}"
+                exit 1
+              }
+
+              # 5. Extract summary and validate
+              SUMMARY=$(echo "$RESPONSE" | jq -r '.response')
+              if [[ -z "$SUMMARY" || "$SUMMARY" == "null" ]]; then
+                echo "::error::Failed to get a summary from the Ollama API."
+                echo "Response: $RESPONSE"
+                exit 1
+              fi
+
+              # 6. Set output
+              echo "summary<<EOF" >> "$GITHUB_OUTPUT"
+              echo "$SUMMARY" >> "$GITHUB_OUTPUT"
+              echo "EOF" >> "$GITHUB_OUTPUT"
+
+              # 7. Truncate summary if needed (GitHub comment limit is ~65k characters)
+              MAX_COMMENT_LENGTH=60000
+              if [ ${#SUMMARY} -gt $MAX_COMMENT_LENGTH ]; then
+                echo "::warning::Summary is too long for GitHub comment. Truncating."
+                SUMMARY="${SUMMARY:0:$MAX_COMMENT_LENGTH}... [truncated]"
+              fi
+
+              # 8. Post comment with error handling
+              gh pr comment ${{ github.event.pull_request.number }} --body "### 🤖 AI Summary (via ${{ inputs.model-name }})
+              $SUMMARY" || {
+                echo "::error::Failed to post comment to PR"
+                exit 1
+              }
