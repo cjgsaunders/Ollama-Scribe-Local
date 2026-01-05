@@ -5,10 +5,11 @@
 ![Category](https://img.shields.io/badge/Category-Utilities-orange)
 
 **Ollama Scribe Local** is a high-performance GitHub Action that uses locally hosted LLMs to perform two distinct jobs:
-**1.** Automatically generate PR summaries so you can spend more time writing code not PRs
-**2** Conduct in-depth reviews of Pull Request diffs. 
-Keep your source code private and eliminate OpenAI/Anthropic API costs.
 
+1.  **Automatically generate PR summaries** so you can spend more time writing code not PRs
+2.  **Conduct in-depth reviews** of PR diffs.
+
+Keep your source code private and eliminate OpenAI/Anthropic API costs.
 
 
 ## ⚙️ Configuration
@@ -54,40 +55,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Ollama Scribe - PR Summary
-        uses: cjgsaunders/ollama-scribe-local@2.0.2
+        uses: cjgsaunders/ollama-scribe-local@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           ollama-url: "http://localhost:11434" # Use a secret if your instance is public
           model-name: "qwen2.5-coder:14b"
           mode: 'summary' # This is the default
-```
-
-### 3. Workflow Example (PR Review)
-Create `.github/workflows/pr-review.yml`:
-
-```yaml
-name: AI PR Review
-
-on:
-  pull_request:
-    types: [opened, synchronize]
-
-jobs:
-  review:
-    runs-on: self-hosted
-    permissions:
-      pull-requests: write
-      contents: read
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Ollama Scribe - PR Review
-        uses: cjgsaunders/ollama-scribe-local@2.0.2
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          ollama-url: "http://localhost:11434"
-          model-name: "qwen2.5-coder:14b"
-          mode: 'review'
-```
