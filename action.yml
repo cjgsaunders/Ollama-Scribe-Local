@@ -81,7 +81,7 @@ runs:
                                 '{model: $model, prompt: ($instructions + "\n\n" + $diff), stream: false}')
               
               # 5. Call your local Ollama API
-              RESPONSE=$(curl -s -f --max-time 180 \
+              RESPONSE=$(curl -s -f \
                               -H "Content-Type: application/json" \
                               -X POST "${{ inputs.ollama-url }}/api/generate" \
                               -d "$JSON_PAYLOAD") || {
