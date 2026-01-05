@@ -61,3 +61,34 @@ jobs:
           ollama-url: "http://localhost:11434" # Use a secret if your instance is public
           model-name: "qwen2.5-coder:14b"
           mode: 'summary' # This is the default
+```
+
+### 3. Workflow Example (PR Review)
+Create `.github/workflows/pr-review.yml`:
+
+```yaml
+name: AI PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  review:
+    runs-on: self-hosted
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Ollama Scribe - PR Review
+        uses: cjgsaunders/ollama-scribe-local@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          ollama-url: "http://localhost:11434"
+          model-name: "qwen2.5-coder:14b"
+          mode: 'review'
+```
