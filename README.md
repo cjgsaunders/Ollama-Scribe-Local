@@ -1,6 +1,6 @@
-# 🤖 Ollama Scribe Local — AI Pull Request Summaries & Reviews
+# 🤖 Ollama Scribe — AI PR Summary & Reviews
 
-[![Marketplace](https://img.shields.io/github/v/release/cjgsaunders/ollama-scribe-local?label=Marketplace)](https://github.com/marketplace/actions/ollama-scribe-local)
+[![Marketplace](https://img.shields.io/github/v/release/cjgsaunders/ollama-scribe-local?label=Marketplace)](https://github.com/marketplace/actions/ollama-scribe-local-pr-summary-and-review)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Category](https://img.shields.io/badge/Category-Utilities-orange)
 
@@ -54,7 +54,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Ollama Scribe - PR Summary
-        uses: cjgsaunders/ollama-scribe-local@2.0.0
+        uses: cjgsaunders/ollama-scribe-local@2.0.2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           ollama-url: "http://localhost:11434" # Use a secret if your instance is public
@@ -84,7 +84,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Ollama Scribe - PR Review
-        uses: cjgsaunders/ollama-scribe-local@2.0.0
+        uses: cjgsaunders/ollama-scribe-local@2.0.2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           ollama-url: "http://localhost:11434"
