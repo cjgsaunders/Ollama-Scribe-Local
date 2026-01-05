@@ -1,4 +1,4 @@
-# 🤖 Ollama Scribe — Private locally hosted AI PR Summaries
+# 🤖 Ollama Scribe Local — Private locally hosted AI PR Summaries
 
 [![Marketplace](https://img.shields.io/badge/Marketplace-Ollama%20Scribe-blue.svg?colorA=24292e&colorB=0366d6&style=flat&longCache=true&logo=github)](https://github.com/marketplace/actions/ollama-scribe)
 ![License](https://img.shields.io/badge/license-MIT-green)
